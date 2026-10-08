@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNA 디펜스 - 상보적 염기 타격전</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for Retro Arcade Vibe -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Jua&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Jua', 'VT323', sans-serif;
+            background-color: #080c14;
+            color: #ecfeff;
+            user-select: none;
+            overflow: hidden;
+        }
+        .retro-font {
+            font-family: 'VT323', monospace;
+        }
+        /* Custom glow effects for retro arcade vibe */
+        .glow-title {
+            text-shadow: 0 0 12px #06b6d4, 0 0 24px #0891b2, 0 0 36px #0e7490;
+        }
+        .glow-box-selected {
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.6), inset 0 0 10px rgba(6, 182, 212, 0.3);
+        }
+        
+        /* Key press active state visual feedback */
+        .key-active {
+            transform: translateY(4px) scale(0.95);
+            filter: brightness(1.3);
+        }
+
+        .shield-active {
+            box-shadow: inset 0 0 35px rgba(234, 179, 8, 0.6), 0 0 25px rgba(234, 179, 8, 0.8);
+            border-color: #eab308 !important;
+        }
+
+        canvas {
+            touch-action: none;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col justify-between items-center relative overflow-hidden bg-slate-950">
+
+    <!-- MAIN CONTAINER -->
+    <div class="relative w-full max-w-2xl h-full flex flex-col justify-between items-center p-2 sm:p-4 z-10">
+
+        <!-- TITLE / START OVERLAY SCREEN -->
+        <div id="startScreen" class="absolute inset-0 z-30 flex flex-col justify-center items-center bg-slate-950/95 p-4 sm:p-6 text-center backdrop-blur-md transition-all duration-300 overflow-y-auto">
+            <!-- Game Title Header -->
+            <div class="mb-3">
+                <span class="px-3 py-1 bg-cyan-900/60 text-cyan-300 border border-cyan-500/50 rounded-full text-xs font-bold tracking-widest uppercase mb-2 inline-block">중학교 과학 - 유전과 진화</span>
+                <h1 class="text-4xl sm:text-6xl font-extrabold text-cyan-400 glow-title tracking-wider">DNA DEFENSE</h1>
+                <p class="text-slate-400 text-xs sm:text-sm mt-1">상보적 염기 결합 스피드 리듬 게임</p>
+            </div>
+
+            <!-- Learning Rule Box -->
+            <div class="w-full max-w-md bg-slate-900/90 border-2 border-cyan-500/40 rounded-2xl p-3.5 my-1.5 text-left shadow-xl">
+                <h2 class="text-cyan-300 font-bold text-sm sm:text-base mb-2 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    학습 핵심: 상보적 염기 쌍 (Complementary Base)
+                </h2>
+                <div class="grid grid-cols-2 gap-2 text-center my-1.5">
+                    <div class="bg-slate-800/80 p-2 rounded-xl border border-rose-500/40">
+                        <span class="text-rose-400 font-extrabold text-base sm:text-lg">A (아데닌)</span>
+                        <span class="text-slate-400 text-[11px] block my-0.5">상보 결합 $\leftrightarrow$</span>
+                        <span class="text-cyan-400 font-bold text-xs bg-slate-950 px-2 py-0.5 rounded border border-cyan-500">T 키 누르기</span>
+                    </div>
+                    <div class="bg-slate-800/80 p-2 rounded-xl border border-cyan-500/40">
+                        <span class="text-cyan-400 font-extrabold text-base sm:text-lg">T (티민)</span>
+                        <span class="text-slate-400 text-[11px] block my-0.5">상보 결합 $\leftrightarrow$</span>
+                        <span class="text-rose-400 font-bold text-xs bg-slate-950 px-2 py-0.5 rounded border border-rose-500">A 키 누르기</span>
+                    </div>
+                    <div class="bg-slate-800/80 p-2 rounded-xl border border-emerald-500/40">
+                        <span class="text-emerald-400 font-extrabold text-base sm:text-lg">G (구아닌)</span>
+                        <span class="text-slate-400 text-[11px] block my-0.5">상보 결합 $\leftrightarrow$</span>
+                        <span class="text-yellow-400 font-bold text-xs bg-slate-950 px-2 py-0.5 rounded border border-yellow-500">C 키 누르기</span>
+                    </div>
+                    <div class="bg-slate-800/80 p-2 rounded-xl border border-yellow-500/40">
+                        <span class="text-yellow-400 font-extrabold text-base sm:text-lg">C (시토신)</span>
+                        <span class="text-slate-400 text-[11px] block my-0.5">상보 결합 $\leftrightarrow$</span>
+                        <span class="text-emerald-400 font-bold text-xs bg-slate-950 px-2 py-0.5 rounded border border-emerald-500">G 키 누르기</span>
+                    </div>
+                </div>
+                <p class="text-[11px] text-slate-400 text-center mt-1.5">
+                    💡 내려오는 염기(A, T, G, C)의 <span class="text-cyan-300 font-bold">짝꿍 염기 키</span>를 정확한 타이밍에 누르세요!
+                </p>
+            </div>
+
+            <!-- Mode & Start Controls -->
+            <div class="w-full max-w-md my-2 flex flex-col gap-2">
+                <div class="w-full text-left">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-xs text-cyan-300 font-bold flex items-center gap-1">
+                            🎮 난이도 선택 (DIFFICULTY)
+                        </span>
+                        <span id="diffSpeedDesc" class="text-[11px] text-emerald-400 font-bold">
+                            느긋하고 여유로운 속도
+                        </span>
+                    </div>
+                    <!-- Difficulty Selection Buttons -->
+                    <div class="grid grid-cols-4 gap-1.5" id="diffGroup">
+                        <button type="button" data-diff="easy" class="diff-btn py-2.5 px-1 text-xs font-bold rounded-xl border-2 border-emerald-500 bg-emerald-950/80 text-emerald-300 shadow-md cursor-pointer transition transform active:scale-95">
+                            🌱 쉬움
+                        </button>
+                        <button type="button" data-diff="normal" class="diff-btn py-2.5 px-1 text-xs font-bold rounded-xl border border-slate-700 bg-slate-900 text-slate-400 hover:text-cyan-300 cursor-pointer transition transform active:scale-95">
+                            ⚡ 보통
+                        </button>
+                        <button type="button" data-diff="hard" class="diff-btn py-2.5 px-1 text-xs font-bold rounded-xl border border-slate-700 bg-slate-900 text-slate-400 hover:text-amber-300 cursor-pointer transition transform active:scale-95">
+                            🔥 어려움
+                        </button>
+                        <button type="button" data-diff="crazy" class="diff-btn py-2.5 px-1 text-xs font-bold rounded-xl border border-slate-700 bg-slate-900 text-slate-400 hover:text-rose-300 cursor-pointer transition transform active:scale-95">
+                            💀 지옥
+                        </button>
+                    </div>
+                </div>
+
+                <button id="startBtn" class="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xl rounded-xl shadow-lg shadow-cyan-500/30 transform active:scale-95 transition-all cursor-pointer mt-1">
+                    GAME START (게임 시작)
+                </button>
+            </div>
+
+            <!-- Best Score Record -->
+            <div class="text-slate-400 text-xs sm:text-sm mt-1 flex items-center gap-2">
+                🏆 최고 기록: <span id="startHighScore" class="text-yellow-400 font-bold text-lg retro-font">0</span> 점
+            </div>
+        </div>
+
+        <!-- TOP HUD DISPLAY (SCORE, HP, PAUSE) -->
+        <div class="w-full flex justify-between items-center bg-slate-900/80 border border-slate-800 rounded-2xl p-2.5 sm:p-3 shadow-lg backdrop-blur-sm z-20">
+            <!-- Health Bar -->
+            <div class="flex flex-col gap-1 w-1/3">
+                <div class="flex justify-between items-center text-xs font-bold text-slate-300">
+                    <span>CELL HP</span>
+                    <span id="hpText" class="text-emerald-400 font-mono">100%</span>
+                </div>
+                <div class="w-full bg-slate-950 h-3 rounded-full overflow-hidden border border-slate-800">
+                    <div id="hpBar" class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full w-full transition-all duration-200"></div>
+                </div>
+            </div>
+
+            <!-- Score & Combo Display -->
+            <div class="flex flex-col items-center">
+                <span class="text-[10px] sm:text-xs text-slate-400 uppercase tracking-wider">SCORE</span>
+                <span id="scoreDisplay" class="text-2xl sm:text-3xl font-bold text-cyan-400 retro-font leading-none">00000</span>
+            </div>
+
+            <!-- Speed Level & Pause Button -->
+            <div class="flex items-center gap-2">
+                <div class="hidden sm:flex flex-col items-end mr-1">
+                    <span id="diffDisplay" class="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/40 mb-0.5">쉬움</span>
+                    <span id="speedDisplay" class="text-xs font-bold text-amber-400">1.0x</span>
+                </div>
+                <button id="pauseBtn" class="p-2 sm:p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl border border-slate-700 transition active:scale-90 cursor-pointer">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- SKILL BAR & NOTIFICATION DISPLAY -->
+        <div class="w-full flex justify-between items-center my-1 px-1 gap-2 z-20">
+            <button id="skillBtn" class="flex-1 py-1.5 px-3 bg-amber-950/70 hover:bg-amber-900/90 border-2 border-amber-500/60 text-amber-300 rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-between shadow-lg transition transform active:scale-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
+                <span class="flex items-center gap-1.5">
+                    <span class="text-base sm:text-lg">🛡️</span>
+                    <span id="skillName">보유 스킬 없음</span>
+                </span>
+                <span class="bg-amber-500 text-slate-950 px-2 py-0.5 rounded-lg text-[10px] sm:text-xs font-black uppercase">['R' 키]</span>
+            </button>
+            <div id="skillListBadge" class="flex gap-1 text-xs">
+                <!-- Skill Inventory Badges will be rendered here dynamically -->
+            </div>
+        </div>
+
+        <!-- CANVAS GAMEPLAY AREA -->
+        <div id="canvasContainer" class="relative w-full flex-1 my-1 rounded-2xl overflow-hidden border-2 border-slate-800 bg-slate-950/80 shadow-2xl flex justify-center items-center transition-all duration-300">
+            <canvas id="gameCanvas" class="w-full h-full block"></canvas>
+            
+            <!-- Skill Toast Notification Banner -->
+            <div id="skillToast" class="absolute top-4 bg-amber-500 text-slate-950 font-extrabold text-xs sm:text-sm px-4 py-2 rounded-full shadow-2xl transition-all duration-300 opacity-0 -translate-y-4 pointer-events-none flex items-center gap-2">
+                <span>🎉</span>
+                <span id="skillToastText">스킬 획득!</span>
+            </div>
+
+            <!-- Combo & Judgment Visual Overlay -->
+            <div class="absolute top-1/3 pointer-events-none flex flex-col items-center">
+                <div id="judgmentText" class="text-2xl sm:text-4xl font-extrabold opacity-0 transform scale-50 transition-all duration-150"></div>
+                <div id="comboText" class="text-sm sm:text-xl font-bold text-yellow-400 opacity-0 retro-font tracking-widest mt-1"></div>
+            </div>
+
+            <!-- Cheat Sheet Floating Helper -->
+            <div class="absolute top-2 right-2 bg-slate-900/70 border border-slate-800 rounded-lg p-2 pointer-events-none text-[10px] text-slate-300 flex flex-col gap-1 backdrop-blur-sm">
+                <div class="font-bold text-cyan-400 text-center border-b border-slate-700 pb-0.5">상보 결합 암기표</div>
+                <div><span class="text-rose-400 font-bold">A</span> $\leftrightarrow$ <span class="text-cyan-400 font-bold">T</span></div>
+                <div><span class="text-cyan-400 font-bold">T</span> $\leftrightarrow$ <span class="text-rose-400 font-bold">A</span></div>
+                <div><span class="text-emerald-400 font-bold">G</span> $\leftrightarrow$ <span class="text-yellow-400 font-bold">C</span></div>
+                <div><span class="text-yellow-400 font-bold">C</span> $\leftrightarrow$ <span class="text-emerald-400 font-bold">G</span></div>
+            </div>
+        </div>
+
+        <!-- CONTROLS / ON-SCREEN TOUCH BUTTONS -->
+        <div class="w-full grid grid-cols-4 gap-2 z-20">
+            <!-- LANE A (Target A -> Press T) -->
+            <button id="btnT" data-key="t" class="touch-btn bg-slate-900/90 hover:bg-slate-800 border-2 border-rose-500/60 rounded-xl p-2 sm:p-3 flex flex-col items-center justify-center transition active:scale-95 shadow-lg cursor-pointer">
+                <span class="text-[10px] sm:text-xs text-rose-400 font-bold">A 결합용</span>
+                <span class="text-xl sm:text-3xl font-black text-rose-400 my-0.5">T</span>
+                <span class="text-[10px] text-slate-400">['T' 키]</span>
+            </button>
+
+            <!-- LANE T (Target T -> Press A) -->
+            <button id="btnA" data-key="a" class="touch-btn bg-slate-900/90 hover:bg-slate-800 border-2 border-cyan-500/60 rounded-xl p-2 sm:p-3 flex flex-col items-center justify-center transition active:scale-95 shadow-lg cursor-pointer">
+                <span class="text-[10px] sm:text-xs text-cyan-400 font-bold">T 결합용</span>
+                <span class="text-xl sm:text-3xl font-black text-cyan-400 my-0.5">A</span>
+                <span class="text-[10px] text-slate-400">['A' 키]</span>
+            </button>
+
+            <!-- LANE G (Target G -> Press C) -->
+            <button id="btnC" data-key="c" class="touch-btn bg-slate-900/90 hover:bg-slate-800 border-2 border-emerald-500/60 rounded-xl p-2 sm:p-3 flex flex-col items-center justify-center transition active:scale-95 shadow-lg cursor-pointer">
+                <span class="text-[10px] sm:text-xs text-emerald-400 font-bold">G 결합용</span>
+                <span class="text-xl sm:text-3xl font-black text-yellow-400 my-0.5">C</span>
+                <span class="text-[10px] text-slate-400">['C' 키]</span>
+            </button>
+
+            <!-- LANE C (Target C -> Press G) -->
+            <button id="btnG" data-key="g" class="touch-btn bg-slate-900/90 hover:bg-slate-800 border-2 border-yellow-500/60 rounded-xl p-2 sm:p-3 flex flex-col items-center justify-center transition active:scale-95 shadow-lg cursor-pointer">
+                <span class="text-[10px] sm:text-xs text-yellow-400 font-bold">C 결합용</span>
+                <span class="text-xl sm:text-3xl font-black text-emerald-400 my-0.5">G</span>
+                <span class="text-[10px] text-slate-400">['G' 키]</span>
+            </button>
+        </div>
+
+    </div>
+
+    <!-- PAUSE MODAL -->
+    <div id="pauseModal" class="hidden absolute inset-0 z-40 bg-slate-950/80 backdrop-blur-md flex flex-col justify-center items-center p-6 text-center">
+        <div class="bg-slate-900 border-2 border-cyan-500/50 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+            <h2 class="text-3xl font-extrabold text-cyan-400 mb-2">PAUSED</h2>
+            <p class="text-slate-400 text-sm mb-6">잠시 쉬어가는 중입니다.</p>
+            <div class="flex flex-col gap-3">
+                <button id="resumeBtn" class="py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-xl shadow-lg transition cursor-pointer">
+                    게임 재개하기
+                </button>
+                <button id="quitBtn" class="py-3 bg-slate-800 hover:bg-slate-700 text-rose-400 font-bold rounded-xl border border-slate-700 transition cursor-pointer">
+                    메인 화면으로
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GAME OVER OVERLAY SCREEN -->
+    <div id="gameOverScreen" class="hidden absolute inset-0 z-40 bg-slate-950/95 flex flex-col justify-center items-center p-6 text-center backdrop-blur-md overflow-y-auto">
+        <div class="bg-slate-900 border-2 border-rose-500/60 rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl">
+            <span class="px-3 py-1 bg-rose-950 text-rose-400 border border-rose-800 rounded-full text-xs font-bold uppercase mb-2 inline-block">Cell Breakdown</span>
+            <h2 class="text-4xl font-extrabold text-rose-500 mb-1">GAME OVER</h2>
+            <p class="text-slate-400 text-xs mb-4">세포 DNA 파괴가 한계치에 도달했습니다!</p>
+
+            <!-- Final Stats Card -->
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 my-3 flex flex-col gap-2">
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-slate-400">선택 난이도</span>
+                    <span id="finalDiff" class="text-sm font-bold text-emerald-300">쉬움 Mode</span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-slate-400">최종 점수</span>
+                    <span id="finalScore" class="text-2xl font-bold text-cyan-400 retro-font">0</span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-slate-400">최대 연속 콤보</span>
+                    <span id="finalCombo" class="text-xl font-bold text-yellow-400 retro-font">0</span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-slate-400">타격 정확도</span>
+                    <span id="finalAccuracy" class="text-xl font-bold text-emerald-400 font-mono">0%</span>
+                </div>
+            </div>
+
+            <!-- Learning Concept Recap -->
+            <div class="bg-cyan-950/40 border border-cyan-800/50 rounded-xl p-3 my-2 text-left text-xs text-cyan-200">
+                <p class="font-bold mb-1 text-cyan-300">🧬 과학 개념 복습</p>
+                <p>DNA의 아데닌(A)은 항상 **티민(T)**과, 구아닌(G)은 항상 **시토신(C)**과 수소 결합으로 상보적 결합을 이룹니다.</p>
+            </div>
+
+            <!-- Action Buttons (Retry & Main Menu) -->
+            <div class="flex flex-col sm:flex-row gap-2 mt-4">
+                <button id="restartBtn" class="flex-1 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-lg rounded-xl shadow-lg shadow-emerald-500/20 transform active:scale-95 transition cursor-pointer">
+                    다시 도전하기 (RETRY)
+                </button>
+                <button id="mainMenuBtn" class="py-3.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-sm sm:text-base rounded-xl border border-slate-700 transform active:scale-95 transition cursor-pointer">
+                    시작 화면으로
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Web Audio Synthesizer for Retro Game Sound Effects
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContext) {
+                        this.ctx = new AudioContext();
+                    }
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            playSkill() {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1200, this.ctx.currentTime + 0.25);
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.25);
+            }
+
+            playRevive() {
+                if (!this.ctx) return;
+                const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99]; // C E G C E G
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.05);
+                    gain.gain.setValueAtTime(0.2, this.ctx.currentTime + idx * 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + idx * 0.05 + 0.3);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(this.ctx.currentTime + idx * 0.05);
+                    osc.stop(this.ctx.currentTime + idx * 0.05 + 0.3);
+                });
+            }
+
+            playPerfect() {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, this.ctx.currentTime); // C5
+                osc.frequency.exponentialRampToValueAtTime(1046.50, this.ctx.currentTime + 0.12); // C6
+                gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.12);
+            }
+
+            playGood() {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, this.ctx.currentTime); // A4
+                osc.frequency.exponentialRampToValueAtTime(659.25, this.ctx.currentTime + 0.1); // E5
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.1);
+            }
+
+            playMiss() {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(180, this.ctx.currentTime);
+                osc.frequency.linearRampToValueAtTime(80, this.ctx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.2);
+            }
+        }
+
+        const audio = new SoundEngine();
+
+        // Difficulty Settings with strict speed hierarchy
+        // Easy < Normal < Hard < Crazy
+        const DIFFICULTIES = {
+            easy: {
+                name: '쉬움',
+                desc: '느긋하고 여유로운 속도 (입문용)',
+                baseSpeed: 1.8,       // Slowest speed
+                baseSpawnInterval: 1600, // Long spawn gap
+                accel: 0.00005,       // Very slow acceleration
+                hitZone: 80,          // Generous hit tolerance
+                missDamage: 4,        // Low HP penalty
+                scoreMult: 0.8,
+                color: '#4ade80',
+                borderColor: 'border-emerald-500',
+                bgColor: 'bg-emerald-950/80',
+                textColor: 'text-emerald-300'
+            },
+            normal: {
+                name: '보통',
+                desc: '적당하고 균형 잡힌 리듬감',
+                baseSpeed: 3.0,       // Medium speed
+                baseSpawnInterval: 1200,
+                accel: 0.00012,
+                hitZone: 65,
+                missDamage: 7,
+                scoreMult: 1.0,
+                color: '#38bdf8',
+                borderColor: 'border-cyan-500',
+                bgColor: 'bg-cyan-950/80',
+                textColor: 'text-cyan-300'
+            },
+            hard: {
+                name: '어려움',
+                desc: '빠른 반응 속도가 필요한 난이도',
+                baseSpeed: 4.5,       // Fast speed
+                baseSpawnInterval: 850,
+                accel: 0.00022,
+                hitZone: 52,
+                missDamage: 11,
+                scoreMult: 1.5,
+                color: '#fbbf24',
+                borderColor: 'border-amber-500',
+                bgColor: 'bg-amber-950/80',
+                textColor: 'text-amber-300'
+            },
+            crazy: {
+                name: '지옥',
+                desc: '초고속 반사신경 한계 도전!',
+                baseSpeed: 6.5,       // Extremely fast speed
+                baseSpawnInterval: 600,  // Very rapid spawn gap
+                accel: 0.00038,
+                hitZone: 40,
+                missDamage: 16,
+                scoreMult: 2.2,
+                color: '#f43f5e',
+                borderColor: 'border-rose-500',
+                bgColor: 'bg-rose-950/80',
+                textColor: 'text-rose-300'
+            }
+        };
+
+        let selectedDiffKey = 'easy';
+
+        // UI Element References
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const pauseModal = document.getElementById('pauseModal');
+        const startBtn = document.getElementById('startBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const mainMenuBtn = document.getElementById('mainMenuBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resumeBtn = document.getElementById('resumeBtn');
+        const quitBtn = document.getElementById('quitBtn');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const speedDisplay = document.getElementById('speedDisplay');
+        const diffDisplay = document.getElementById('diffDisplay');
+        const finalDiff = document.getElementById('finalDiff');
+        const hpBar = document.getElementById('hpBar');
+        const hpText = document.getElementById('hpText');
+        const judgmentText = document.getElementById('judgmentText');
+        const comboText = document.getElementById('comboText');
+        const startHighScore = document.getElementById('startHighScore');
+        const diffSpeedDesc = document.getElementById('diffSpeedDesc');
+
+        const skillBtn = document.getElementById('skillBtn');
+        const skillName = document.getElementById('skillName');
+        const skillListBadge = document.getElementById('skillListBadge');
+        const skillToast = document.getElementById('skillToast');
+        const skillToastText = document.getElementById('skillToastText');
+        const canvasContainer = document.getElementById('canvasContainer');
+
+        // DNA Base Configs & Complement mapping
+        // Target Lane -> Incoming DNA symbol -> Required Complement Key to press
+        const LANES = [
+            { symbol: 'A', name: '아데닌', pressKey: 't', color: '#f43f5e', complement: 'T' }, // Lane 0
+            { symbol: 'T', name: '티민', pressKey: 'a', color: '#38bdf8', complement: 'A' },   // Lane 1
+            { symbol: 'G', name: '구아닌', pressKey: 'c', color: '#4ade80', complement: 'C' }, // Lane 2
+            { symbol: 'C', name: '시토신', pressKey: 'g', color: '#facc15', complement: 'G' }  // Lane 3
+        ];
+
+        // Key to Lane index mapping for quick lookup
+        const KEY_TO_LANE = {
+            't': 0, 'T': 0, 'ㅅ': 0,
+            'a': 1, 'A': 1, 'ㅁ': 1,
+            'c': 2, 'C': 2, 'ㅊ': 2,
+            'g': 3, 'G': 3, 'ㅎ': 3
+        };
+
+        // Canvas & Context Setup
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Game State Variables
+        let isPlaying = false;
+        let isPaused = false;
+        let animationFrameId = null;
+        let lastTime = 0;
+        let spawnTimer = 0;
+        let spawnInterval = 1600; // ms
+
+        let score = 0;
+        let combo = 0;
+        let maxCombo = 0;
+        let hp = 100;
+        let totalNotes = 0;
+        let hitNotes = 0;
+        let baseSpeed = 1.8;
+        let speedMultiplier = 1.0;
+        let highScore = parseInt(localStorage.getItem('dna_defense_highscore') || '0', 10);
+        startHighScore.textContent = highScore;
+
+        let skillInventory = []; // Array of available skill objects
+        let unlockedMilestones = { 1000: false, 2000: false, 3000: false, 5000: false };
+        let invincibleTimer = 0; // Milliseconds of invincibility left
+
+        // Show Toast Notification when Skill is earned
+        function showSkillToast(msg) {
+            skillToastText.textContent = msg;
+            skillToast.className = 'absolute top-4 bg-amber-400 text-slate-950 font-extrabold text-xs sm:text-sm px-4 py-2 rounded-full shadow-2xl transition-all duration-300 opacity-100 translate-y-0 flex items-center gap-2 z-30';
+            setTimeout(() => {
+                skillToast.className = 'absolute top-4 bg-amber-400 text-slate-950 font-extrabold text-xs sm:text-sm px-4 py-2 rounded-full shadow-2xl transition-all duration-300 opacity-0 -translate-y-4 pointer-events-none flex items-center gap-2 z-30';
+            }, 2200);
+        }
+
+        // Update Skill UI Display Bar
+        function updateSkillUI() {
+            if (skillInventory.length > 0) {
+                const currentSkill = skillInventory[0];
+                skillName.textContent = `${currentSkill.name} (사용 가능!)`;
+                skillBtn.disabled = false;
+            } else {
+                skillName.textContent = '보유 스킬 없음';
+                skillBtn.disabled = true;
+            }
+
+            // Render remaining inventory skill badges
+            skillListBadge.innerHTML = skillInventory.slice(1).map(s => 
+                `<span class="px-2 py-1 bg-amber-950/80 border border-amber-500/50 text-amber-300 rounded-lg text-[10px] font-bold">${s.shortName}</span>`
+            ).join('');
+        }
+
+        // Check & Unlock Skills on Score Milestones
+        function checkSkillMilestones() {
+            if (score >= 1000 && !unlockedMilestones[1000]) {
+                unlockedMilestones[1000] = true;
+                skillInventory.push({ id: 1000, name: '1초 무적 방어막', shortName: '1초 무적', type: 'invincible', duration: 1000 });
+                showSkillToast('1,000점 달성! 1초 무적 스킬 획득! [R 키]');
+                audio.playSkill();
+                updateSkillUI();
+            }
+            if (score >= 2000 && !unlockedMilestones[2000]) {
+                unlockedMilestones[2000] = true;
+                skillInventory.push({ id: 2000, name: '3초 무적 방어막', shortName: '3초 무적', type: 'invincible', duration: 3000 });
+                showSkillToast('2,000점 달성! 3초 무적 스킬 획득! [R 키]');
+                audio.playSkill();
+                updateSkillUI();
+            }
+            if (score >= 3000 && !unlockedMilestones[3000]) {
+                unlockedMilestones[3000] = true;
+                skillInventory.push({ id: 3000, name: '5초 무적 방어막', shortName: '5초 무적', type: 'invincible', duration: 5000 });
+                showSkillToast('3,000점 달성! 5초 무적 스킬 획득! [R 키]');
+                audio.playSkill();
+                updateSkillUI();
+            }
+            if (score >= 5000 && !unlockedMilestones[5000]) {
+                unlockedMilestones[5000] = true;
+                skillInventory.push({ id: 5000, name: '100% 체력 부활', shortName: '부활', type: 'revive' });
+                showSkillToast('5,000점 달성! 1회 부활 스킬 획득! [R 키]');
+                audio.playSkill();
+                updateSkillUI();
+            }
+        }
+
+        // Use Current Skill Handler
+        function useSkill() {
+            if (!isPlaying || isPaused || skillInventory.length === 0) return;
+
+            const skill = skillInventory.shift(); // Remove used skill
+            audio.playSkill();
+
+            if (skill.type === 'invincible') {
+                invincibleTimer = skill.duration;
+                showJudgment(`🛡️ ${skill.shortName} 발동!`, '#facc15');
+                canvasContainer.classList.add('shield-active');
+            } else if (skill.type === 'revive') {
+                hp = 100;
+                notes = []; // Clear falling notes
+                showJudgment('❤️ 체력 100% 부활!', '#f43f5e');
+                audio.playRevive();
+            }
+
+            updateHUD();
+            updateSkillUI();
+        }
+
+        skillBtn.addEventListener('click', useSkill);
+
+        // Falling Note Class
+        class Note {
+            constructor(lane) {
+                this.lane = lane;
+                this.y = -40;
+                this.config = LANES[lane];
+                this.hit = false;
+                this.radius = 22;
+            }
+
+            update(speed) {
+                this.y += speed;
+            }
+
+            draw(ctx, laneWidth) {
+                const x = this.lane * laneWidth + laneWidth / 2;
+
+                // Outer Glowing Ring
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(x, this.y, this.radius + 3, 0, Math.PI * 2);
+                ctx.fillStyle = this.config.color;
+                ctx.globalAlpha = 0.3;
+                ctx.fill();
+                ctx.restore();
+
+                // Main Circle Node
+                ctx.beginPath();
+                ctx.arc(x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#0f172a';
+                ctx.fill();
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = this.config.color;
+                ctx.stroke();
+
+                // Text Symbol (A, T, G, C)
+                ctx.fillStyle = this.config.color;
+                ctx.font = 'bold 22px "Jua", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.config.symbol, x, this.y);
+            }
+        }
+
+        // Particle System for Hit Explosions
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.vx = (Math.random() - 0.5) * 8;
+                this.vy = (Math.random() - 0.5) * 8;
+                this.alpha = 1.0;
+                this.size = Math.random() * 5 + 3;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.alpha -= 0.04;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        let notes = [];
+        let particles = [];
+        let lanePulses = [0, 0, 0, 0];
+
+        // Difficulty Button Click Handlers (Updates active UI state visually)
+        const diffButtons = document.querySelectorAll('.diff-btn');
+        
+        function updateDiffSelection(diffKey) {
+            selectedDiffKey = diffKey;
+            const conf = DIFFICULTIES[diffKey];
+
+            diffButtons.forEach(btn => {
+                const key = btn.getAttribute('data-diff');
+                if (key === diffKey) {
+                    // Active Selected Button Style
+                    btn.className = `diff-btn py-2.5 px-1 text-xs font-extrabold rounded-xl border-2 ${conf.borderColor} ${conf.bgColor} ${conf.textColor} transition transform active:scale-95 shadow-lg glow-box-selected cursor-pointer`;
+                } else {
+                    // Unselected Button Style
+                    btn.className = 'diff-btn py-2.5 px-1 text-xs font-bold rounded-xl border border-slate-800 bg-slate-900/90 text-slate-400 hover:text-cyan-300 transition transform active:scale-95 cursor-pointer';
+                }
+            });
+
+            // Update difficulty speed description label on menu
+            diffSpeedDesc.textContent = conf.desc;
+            diffSpeedDesc.className = `text-[11px] font-bold ${conf.textColor}`;
+        }
+
+        diffButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const diffKey = btn.getAttribute('data-diff');
+                updateDiffSelection(diffKey);
+            });
+        });
+
+        // Spawn a random DNA base note
+        function spawnNote() {
+            const lane = Math.floor(Math.random() * 4);
+            notes.push(new Note(lane));
+        }
+
+        // Create explosion particles on hit
+        function createExplosion(x, y, color) {
+            for (let i = 0; i < 14; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+        }
+
+        // Show Perfect / Good / Miss feedback overlay
+        function showJudgment(text, color) {
+            judgmentText.textContent = text;
+            judgmentText.style.color = color;
+            judgmentText.className = 'text-2xl sm:text-4xl font-extrabold opacity-100 transform scale-110 transition-all duration-150';
+
+            if (combo > 1) {
+                comboText.textContent = `${combo} COMBO!`;
+                comboText.className = 'text-sm sm:text-xl font-bold text-yellow-400 opacity-100 retro-font tracking-widest mt-1';
+            } else {
+                comboText.className = 'text-sm sm:text-xl font-bold text-yellow-400 opacity-0 retro-font tracking-widest mt-1';
+            }
+
+            setTimeout(() => {
+                judgmentText.className = 'text-2xl sm:text-4xl font-extrabold opacity-0 transform scale-50 transition-all duration-150';
+            }, 300);
+        }
+
+        // Update HUD display elements
+        function updateHUD() {
+            scoreDisplay.textContent = String(score).padStart(5, '0');
+            speedDisplay.textContent = `${speedMultiplier.toFixed(1)}x`;
+            
+            // Health bar clamping and color change
+            const clampedHp = Math.max(0, hp);
+            hpText.textContent = `${clampedHp}%`;
+            hpBar.style.width = `${clampedHp}%`;
+
+            if (clampedHp < 30) {
+                hpBar.className = 'bg-gradient-to-r from-rose-600 to-red-500 h-full w-full transition-all duration-200';
+                hpText.className = 'text-rose-400 font-mono font-bold animate-pulse';
+            } else if (clampedHp < 60) {
+                hpBar.className = 'bg-gradient-to-r from-amber-500 to-yellow-400 h-full w-full transition-all duration-200';
+                hpText.className = 'text-amber-400 font-mono font-bold';
+            } else {
+                hpBar.className = 'bg-gradient-to-r from-emerald-500 to-teal-400 h-full w-full transition-all duration-200';
+                hpText.className = 'text-emerald-400 font-mono';
+            }
+        }
+
+        // Check for Game Over condition
+        function checkGameOver() {
+            if (hp <= 0) {
+                // Auto-use revive skill if available in inventory
+                const reviveIdx = skillInventory.findIndex(s => s.type === 'revive');
+                if (reviveIdx !== -1) {
+                    skillInventory.splice(reviveIdx, 1);
+                    hp = 100;
+                    notes = [];
+                    showJudgment('❤️ 1회 부활 성공!', '#f43f5e');
+                    audio.playRevive();
+                    updateHUD();
+                    updateSkillUI();
+                    return;
+                }
+                endGame();
+            }
+        }
+
+        // Touch & Click Event Listeners for Touch Buttons
+        function handleInput(laneIndex) {
+            if (!isPlaying || isPaused) return;
+
+            audio.init();
+            lanePulses[laneIndex] = 1.0; // Trigger lane press flash
+
+            const currentDiff = DIFFICULTIES[selectedDiffKey];
+            const laneWidth = canvas.width / 4;
+            const hitZoneY = canvas.height - 70; // Timing line y-coordinate
+            const hitThreshold = currentDiff.hitZone; // Tolerance distance according to difficulty
+
+            // Find closest active note in target lane
+            let closestNoteIndex = -1;
+            let minDistance = Infinity;
+
+            for (let i = 0; i < notes.length; i++) {
+                const note = notes[i];
+                if (note.lane === laneIndex && !note.hit) {
+                    const dist = Math.abs(note.y - hitZoneY);
+                    if (dist < minDistance) {
+                        minDistance = dist;
+                        closestNoteIndex = i;
+                    }
+                }
+            }
+
+            if (closestNoteIndex !== -1 && minDistance <= hitThreshold) {
+                // Hit success!
+                const note = notes[closestNoteIndex];
+                note.hit = true;
+                totalNotes++;
+                hitNotes++;
+
+                const x = laneIndex * laneWidth + laneWidth / 2;
+                createExplosion(x, note.y, note.config.color);
+
+                if (minDistance < hitThreshold * 0.45) {
+                    // PERFECT HIT
+                    showJudgment('PERFECT!', '#38bdf8');
+                    score += Math.floor(100 * speedMultiplier * currentDiff.scoreMult);
+                    combo++;
+                    hp = Math.min(100, hp + 3);
+                    audio.playPerfect();
+                } else {
+                    // GOOD HIT
+                    showJudgment('GOOD', '#4ade80');
+                    score += Math.floor(50 * speedMultiplier * currentDiff.scoreMult);
+                    combo++;
+                    hp = Math.min(100, hp + 1);
+                    audio.playGood();
+                }
+
+                if (combo > maxCombo) maxCombo = combo;
+                notes.splice(closestNoteIndex, 1);
+                checkSkillMilestones();
+                updateHUD();
+            } else {
+                // WRONG KEY OR MIS-TIMED PRESS
+                if (invincibleTimer > 0) {
+                    showJudgment('🛡️ 무적 방어!', '#facc15');
+                } else {
+                    showJudgment('MISS!', '#f43f5e');
+                    combo = 0;
+                    hp -= currentDiff.missDamage;
+                    audio.playMiss();
+                    checkGameOver();
+                }
+                updateHUD();
+            }
+        }
+
+        // Attach event listeners to touch/click buttons
+        document.querySelectorAll('.touch-btn').forEach(btn => {
+            const key = btn.getAttribute('data-key');
+            const laneIndex = KEY_TO_LANE[key];
+
+            const triggerInput = (e) => {
+                e.preventDefault();
+                btn.classList.add('key-active');
+                setTimeout(() => btn.classList.remove('key-active'), 120);
+                handleInput(laneIndex);
+            };
+
+            btn.addEventListener('touchstart', triggerInput, { passive: false });
+            btn.addEventListener('mousedown', triggerInput);
+        });
+
+        // Keyboard Event Listener
+        window.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
+            const key = e.key;
+
+            if (KEY_TO_LANE.hasOwnProperty(key)) {
+                const laneIndex = KEY_TO_LANE[key];
+                const targetBtnId = ['btnT', 'btnA', 'btnC', 'btnG'][laneIndex];
+                const btn = document.getElementById(targetBtnId);
+                if (btn) {
+                    btn.classList.add('key-active');
+                    setTimeout(() => btn.classList.remove('key-active'), 120);
+                }
+                handleInput(laneIndex);
+            } else if (key === 'r' || key === 'R' || key === 'ㄱ') {
+                useSkill();
+            } else if (key === 'Escape' || key === 'p' || key === 'P') {
+                togglePause();
+            }
+        });
+
+        // Main Game Loop Animation
+        function gameLoop(timestamp) {
+            if (!isPlaying) return;
+
+            if (!lastTime) lastTime = timestamp;
+            const deltaTime = timestamp - lastTime;
+            lastTime = timestamp;
+
+            const currentDiff = DIFFICULTIES[selectedDiffKey];
+
+            if (!isPaused) {
+                if (invincibleTimer > 0) {
+                    invincibleTimer -= deltaTime;
+                    if (invincibleTimer <= 0) {
+                        invincibleTimer = 0;
+                        canvasContainer.classList.remove('shield-active');
+                    }
+                }
+
+                // Progressive Difficulty Scaling
+                speedMultiplier += currentDiff.accel; // Acceleration rate varies per difficulty
+                const currentSpeed = baseSpeed * speedMultiplier;
+                
+                // Spawn Interval scales dynamically with speed
+                spawnInterval = Math.max(280, currentDiff.baseSpawnInterval - (speedMultiplier - 1.0) * 350);
+
+                // Note Spawner Timer
+                spawnTimer += deltaTime;
+                if (spawnTimer >= spawnInterval) {
+                    spawnNote();
+                    spawnTimer = 0;
+                }
+
+                // Render Canvas Background & Lane Dividers
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const laneWidth = canvas.width / 4;
+
+                // Draw DNA background track grid
+                for (let i = 0; i < 4; i++) {
+                    const x = i * laneWidth;
+
+                    // Lane background gradient fill on key press pulse
+                    if (lanePulses[i] > 0) {
+                        ctx.fillStyle = LANES[i].color;
+                        ctx.globalAlpha = lanePulses[i] * 0.15;
+                        ctx.fillRect(x, 0, laneWidth, canvas.height);
+                        ctx.globalAlpha = 1.0;
+                        lanePulses[i] = Math.max(0, lanePulses[i] - 0.05);
+                    }
+
+                    // Lane border line
+                    ctx.strokeStyle = '#1e293b';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, canvas.height);
+                    ctx.stroke();
+
+                    // Lane Base Header at top
+                    ctx.fillStyle = LANES[i].color;
+                    ctx.font = 'bold 12px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`[${LANES[i].symbol}]`, x + laneWidth / 2, 20);
+                }
+
+                // Draw Target Hit Line Zone (Timing Bar near bottom)
+                const hitZoneY = canvas.height - 70;
+                ctx.strokeStyle = invincibleTimer > 0 ? '#facc15' : currentDiff.color;
+                ctx.lineWidth = 3;
+                ctx.shadowColor = invincibleTimer > 0 ? '#facc15' : currentDiff.color;
+                ctx.shadowBlur = invincibleTimer > 0 ? 15 : 8;
+                ctx.beginPath();
+                ctx.moveTo(0, hitZoneY);
+                ctx.lineTo(canvas.width, hitZoneY);
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                // Update and Draw Falling Notes
+                for (let i = notes.length - 1; i >= 0; i--) {
+                    const note = notes[i];
+                    note.update(currentSpeed);
+                    note.draw(ctx, laneWidth);
+
+                    // Check for Missed Notes (Fell past hit zone)
+                    if (note.y > canvas.height - 20 && !note.hit) {
+                        totalNotes++;
+                        if (invincibleTimer > 0) {
+                            showJudgment('🛡️ 무적 방어!', '#facc15');
+                        } else {
+                            showJudgment('MISS!', '#f43f5e');
+                            combo = 0;
+                            hp -= currentDiff.missDamage;
+                            audio.playMiss();
+                            checkGameOver();
+                        }
+                        notes.splice(i, 1);
+                        updateHUD();
+                    }
+                }
+
+                // Update & Render Particles
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.update();
+                    p.draw(ctx);
+                    if (p.alpha <= 0) particles.splice(i, 1);
+                }
+            }
+
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        // Start Game Handler
+        function startGame() {
+            audio.init();
+            isPlaying = true;
+            isPaused = false;
+            score = 0;
+            combo = 0;
+            maxCombo = 0;
+            hp = 100;
+            totalNotes = 0;
+            hitNotes = 0;
+
+            skillInventory = [];
+            unlockedMilestones = { 1000: false, 2000: false, 3000: false, 5000: false };
+            invincibleTimer = 0;
+            canvasContainer.classList.remove('shield-active');
+            updateSkillUI();
+
+            const conf = DIFFICULTIES[selectedDiffKey];
+            baseSpeed = conf.baseSpeed;
+            spawnInterval = conf.baseSpawnInterval;
+            speedMultiplier = 1.0;
+            
+            diffDisplay.textContent = conf.name;
+            diffDisplay.className = `text-[10px] font-extrabold px-1.5 py-0.5 rounded ${conf.bgColor} ${conf.textColor} border ${conf.borderColor} mb-0.5`;
+
+            notes = [];
+            particles = [];
+            lastTime = 0;
+            spawnTimer = 0;
+
+            updateHUD();
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            pauseModal.classList.add('hidden');
+
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        // Toggle Game Pause
+        function togglePause() {
+            if (!isPlaying) return;
+            isPaused = !isPaused;
+            if (isPaused) {
+                pauseModal.classList.remove('hidden');
+            } else {
+                pauseModal.classList.add('hidden');
+                lastTime = performance.now(); // Reset delta timer on unpause
+            }
+        }
+
+        // End Game Handler
+        function endGame() {
+            isPlaying = false;
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+            const conf = DIFFICULTIES[selectedDiffKey];
+
+            // Calculate accuracy %
+            const accuracy = totalNotes > 0 ? Math.round((hitNotes / totalNotes) * 100) : 0;
+
+            // Save high score
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('dna_defense_highscore', highScore);
+            }
+
+            finalDiff.textContent = `${conf.name} Mode`;
+            finalDiff.className = `text-sm font-bold ${conf.textColor}`;
+
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('finalCombo').textContent = maxCombo;
+            document.getElementById('finalAccuracy').textContent = `${accuracy}%`;
+
+            gameOverScreen.classList.remove('hidden');
+        }
+
+        // UI Buttons Click Handlers
+        startBtn.addEventListener('click', startGame);
+        restartBtn.addEventListener('click', startGame);
+        mainMenuBtn.addEventListener('click', () => {
+            isPlaying = false;
+            gameOverScreen.classList.add('hidden');
+            startHighScore.textContent = highScore;
+            startScreen.classList.remove('hidden');
+        });
+        pauseBtn.addEventListener('click', togglePause);
+        resumeBtn.addEventListener('click', togglePause);
+        quitBtn.addEventListener('click', () => {
+            isPlaying = false;
+            pauseModal.classList.add('hidden');
+            startHighScore.textContent = highScore;
+            startScreen.classList.remove('hidden');
+        });
+
+        // Initialize default UI state
+        updateDiffSelection('easy');
+
+    </script>
+</body>
+</html>
